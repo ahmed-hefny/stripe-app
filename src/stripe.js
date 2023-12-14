@@ -149,19 +149,35 @@ class Stripe {
     return await this.getReq('charges', { limit: 100, customer: customer.id })
   }
 
-  async chargeCustomers (customers, body, concurrency = 1) {
+  async createChargeByPaymentIntent ({ amount, currency, customerId, paymentMethodId }) {
+    const payload = {
+      amount: amount,
+      currency: currency,
+      customer: customerId,
+      description: 'Subscription',
+      confirm: true,
+      payment_method: paymentMethodId,
+      'automatic_payment_methods[enabled]': true,
+      return_url: window.origin
+    }
+
+    return this.postReq('payment_intents', payload)
+  }
+
+  async chargeCustomers (customers, { amount, currency }, concurrency = 1) {
     const promises = Promise.map(customers, async customer => {
+      
       if (this.inProgress) {
         try {
-          if (customer.paymentMethod) {
-            const payload = {
-              amount: body.amount,
-              currency: body.currency,
-              customer: customer.id,
-              description: 'Subscription',
-              source: customer.paymentMethod.id
-            }
-            const createdCharge = await this.postReq('charges', payload)
+          const { paymentMethod } = customer || {}
+
+          if (paymentMethod) {
+            const createdCharge = await this.createChargeByPaymentIntent({
+              amount,
+              currency,
+              customerId: customer.id,
+              paymentMethodId: paymentMethod.id
+            })
 
             customer.charged = createdCharge.status === 'succeeded'
             customer.chargeError = createdCharge?.error?.decline_code || createdCharge?.outcome?.reason
