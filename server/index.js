@@ -1,12 +1,34 @@
 const express = require('express')
 const app = express()
-const { listCustomers, chargeCustomers } = require('./api')
+const cors = require('cors')
+const compression = require('compression')
+const {
+  listCustomers,
+  chargeCustomers,
+  stopCharging
+} = require('./api')
 
 const PORT = process.env.PORT || 3000
 
 app.use(express.json())
+app.use(cors())
+app.use(compression())
 app.use(express.static('public'))
 
+/**
+ * @route POST /api/list-customers
+ * 
+ * @param {String} apiKey
+ * @param {Object} filters
+ * @param {String[]} filters.excludedIds
+ * @param {Boolean} filters.refunded
+ * @param {Boolean} filters.disputed
+ * @param {Boolean} filters.expiredCard
+ * @param {Boolean} filters.validCard
+ * @param {Boolean} filters.chargedToday
+ * 
+ * @returns {Object[]} customers
+ */
 app.post('/api/list-customers', async (req, res) => {
   try {
     await listCustomers(req, res)
@@ -17,6 +39,18 @@ app.post('/api/list-customers', async (req, res) => {
   }
 })
 
+/**
+ * @route POST /api/charge-customers
+ * 
+ * @param {String} apiKey
+ * @param {Object[]} customerWithPaymentMethods
+ * @param {Number} amount
+ * @param {String} currency
+ * @param {Number} chargePerSecond
+ * @param {String} description
+ * 
+ * @returns {Object[]} customers
+ */
 app.post('/api/charge-customers', async (req, res) => {
   try {
     await chargeCustomers(req, res)
@@ -27,6 +61,21 @@ app.post('/api/charge-customers', async (req, res) => {
   }
 })
 
-app.post('/api/stop-charge', chargeCustomers)
+/**
+ * @route POST /api/stop-charge
+ * 
+ * @param {String} apiKey
+ * 
+ * @returns {Object[]} customers
+ */
+app.post('/api/stop-charge', async (req, res) => {
+  try {
+    await stopCharging(req, res)
+  } catch (e) {
+    console.error('/api/stop-charge', e)
+
+    res.status(500).send(e.message)
+  }
+})
 
 app.listen(PORT, () => console.log('Listening on port', PORT))

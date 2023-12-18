@@ -115,7 +115,7 @@ const listCustomers = async (req, res) => {
   const customers = (await Promise.all(customerPromises))
     .map(addStatuses)
     .filter(data => filterCustomers({ ...data, filters }))
-    .map(({ customer, statuses }) => {
+    .map(({ customer, paymentMethods, statuses }) => {
       const { id, email, name } = customer
 
       return {
@@ -124,6 +124,7 @@ const listCustomers = async (req, res) => {
           email,
           name
         },
+        paymentMethodIds: paymentMethods.map(({ id }) => id),
         statuses
       }
     })
@@ -134,11 +135,11 @@ const listCustomers = async (req, res) => {
 const chargeCustomers = async (req, res) => {
   const {
     apiKey,
-    chargePerSecond,
     customerWithPaymentMethods,
     amount,
     currency,
-    description
+    chargePerSecond = 50,
+    description = 'Subscription',
   } = req.body
 
   const limiter = new RateLimiter({ tokensPerInterval: MAX_STRIPE_REQS_PER_SECOND, interval: 'second' })
@@ -172,6 +173,8 @@ const chargeCustomers = async (req, res) => {
           return_url: 'https://siriusb36-stripe.site'
         })
 
+        console.log(paymentIntent)
+
         customer.charged = paymentIntent.status === 'succeeded'
         customer.chargeError = paymentIntent?.error?.decline_code || paymentIntent?.outcome?.reason
         customer.charge = paymentIntent
@@ -179,13 +182,18 @@ const chargeCustomers = async (req, res) => {
         customer.chargeError = 'Customer has no payment method'
       }
     } catch (e) {
+      console.error('chargeCustomers', customerId, e)
       customer.chargeError = 'INTERNAL ERROR - ' + e.message
     }
+
+    customers.push(customer)
   }
 
   res.send(customers)
 }
 
+const stopCharging = async (req, res) => {
+}
 module.exports = {
   listCustomers,
   chargeCustomers
