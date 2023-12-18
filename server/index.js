@@ -62,17 +62,17 @@ app.post('/api/charge-customers', async (req, res) => {
 })
 
 /**
- * @route POST /api/stop-charge
+ * @route POST /api/stop-charging
  * 
  * @param {String} apiKey
  * 
  * @returns {Object[]} customers
  */
-app.post('/api/stop-charge', async (req, res) => {
+app.post('/api/stop-charging', async (req, res) => {
   try {
     await stopCharging(req, res)
   } catch (e) {
-    console.error('/api/stop-charge', e)
+    console.error('/api/stop-charging', e)
 
     res.status(500).send(e.message)
   }

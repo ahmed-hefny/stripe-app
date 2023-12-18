@@ -144,13 +144,29 @@ const chargeCustomers = async (req, res) => {
 
   const limiter = new RateLimiter({ tokensPerInterval: MAX_STRIPE_REQS_PER_SECOND, interval: 'second' })
 
-  const customers = []
+  // add to state
+  STATE[apiKey] = {
+    customers: [],
+    inProgress: true,
+  }
 
   for (const customer of customerWithPaymentMethods) {
     const tokensPerReq = isNaN(Number(chargePerSecond))
       ? 1
       : (MAX_STRIPE_REQS_PER_SECOND / Number(chargePerSecond))
 
+    // check if frontend stopped charging
+    if (STATE[apiKey].inProgress === false) {
+      STATE[apiKey].customers.push({
+        ...customer,
+        charged: false,
+        chargeError: 'Stopped charging - "STOP" button pressed'
+      })
+
+      continue
+    }
+
+    // wait for rate limiter
     await limiter.removeTokens(tokensPerReq)
 
     const { id: customerId, paymentMethodId } = customer
@@ -179,22 +195,39 @@ const chargeCustomers = async (req, res) => {
         customer.chargeError = paymentIntent?.error?.decline_code || paymentIntent?.outcome?.reason
         customer.charge = paymentIntent
       } else {
+        customer.charged = false
         customer.chargeError = 'Customer has no payment method'
       }
     } catch (e) {
       console.error('chargeCustomers', customerId, e)
+
+      customer.charged = false
       customer.chargeError = 'INTERNAL ERROR - ' + e.message
     }
 
-    customers.push(customer)
+    STATE[apiKey].customers.push(customer)
   }
 
-  res.send(customers)
+  STATE[apiKey].inProgress = false
+
+  res.send(STATE[apiKey].customers)
+
+  delete STATE[apiKey]
 }
 
 const stopCharging = async (req, res) => {
+  const { apiKey } = req.body
+
+  if (!STATE[apiKey]) {
+    return res.send({ ok: false })
+  }
+
+  STATE[apiKey].inProgress = false
+
+  res.send({ ok: true })
 }
 module.exports = {
   listCustomers,
-  chargeCustomers
+  chargeCustomers,
+  stopCharging
 }
