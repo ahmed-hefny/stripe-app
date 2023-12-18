@@ -11,7 +11,8 @@ const els = {
   $concurrency: $('#concurrency'),
   $expectedTotal: $('#expectedTotalAmount'),
   $actualTotal: $('#actualTotalAmount'),
-  $chargeBtn: $('#charge')
+  $chargeBtn: $('#charge'),
+  $description: $('description')
 }
 const actionButtons = {
   charge: 'Charge',
@@ -155,11 +156,12 @@ const chargeCustomers = async () => {
     changeChargeBtnText(actionButtons.stop)
     let actualAmount = 0
     const currency = els.$currency.value
-    const concurrency = +els.$concurrency.value
+    const concurrency = +els.$concurrency.value;
+    const description = els.$description.value ? els.$description.value : 'Subscription'
     STRIPE.inProgress = true
     els.$tableData.innerHTML = `<th class="text-center" colspan="5">${getSpinnerHTML('secondary', 15)}</th>`
     ALL_CUSTOMERS.forEach(cus => {cus.charged = false})
-    const chargedCustomersList = await STRIPE.chargeCustomers(ALL_CUSTOMERS, { amount, currency }, concurrency)
+    const chargedCustomersList = await STRIPE.chargeCustomers(ALL_CUSTOMERS, { amount, currency, description }, concurrency)
     chargedCustomersList.filter(ch => ch?.charged).forEach(customer => {
       actualAmount += customer?.charge?.amount_captured / 100
     })

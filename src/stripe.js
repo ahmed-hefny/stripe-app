@@ -149,12 +149,12 @@ class Stripe {
     return await this.getReq('charges', { limit: 100, customer: customer.id })
   }
 
-  async createChargeByPaymentIntent ({ amount, currency, customerId, paymentMethodId }) {
+  async createChargeByPaymentIntent ({ description, amount, currency, customerId, paymentMethodId }) {
     const payload = {
       amount: amount,
       currency: currency,
       customer: customerId,
-      description: 'Subscription',
+      description: description,
       confirm: true,
       payment_method: paymentMethodId,
       'automatic_payment_methods[enabled]': true,
@@ -164,7 +164,7 @@ class Stripe {
     return this.postReq('payment_intents', payload)
   }
 
-  async chargeCustomers (customers, { amount, currency }, concurrency = 1) {
+  async chargeCustomers (customers, { amount, currency, description }, concurrency = 1) {
     const promises = Promise.map(customers, async customer => {
       
       if (this.inProgress) {
@@ -176,7 +176,8 @@ class Stripe {
               amount,
               currency,
               customerId: customer.id,
-              paymentMethodId: paymentMethod.id
+              paymentMethodId: paymentMethod.id,
+              description
             })
 
             customer.charged = createdCharge.status === 'succeeded'
