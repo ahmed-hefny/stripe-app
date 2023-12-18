@@ -14,6 +14,7 @@ const els = {
   $chargeBtn: $('#charge'),
   $description: $('description')
 }
+
 const actionButtons = {
   charge: 'Charge',
   stop: 'Stop',
