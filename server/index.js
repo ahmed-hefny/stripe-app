@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
+const path = require('path')
 const compression = require('compression')
 const {
   listCustomers,
@@ -9,11 +10,12 @@ const {
 } = require('./api')
 
 const PORT = process.env.PORT || 3000
+const PUBLIC_PATH = path.join(__dirname, 'public')
 
 app.use(express.json())
 app.use(cors())
 app.use(compression())
-app.use(express.static('public'))
+app.use(express.static(PUBLIC_PATH))
 
 /**
  * @route POST /api/list-customers
