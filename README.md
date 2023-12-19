@@ -1,6 +1,6 @@
 # Siriusb 36
 
-Batch Stripe customers based on filters
+Batch charging Stripe customers based on filters
 
 ## Requirements
 - node.js v16+
@@ -25,4 +25,3 @@ Filter by:
 4. Only show customers with valid card
 5. Customers that were charged today
 6. Exclude certain customer IDs
-
