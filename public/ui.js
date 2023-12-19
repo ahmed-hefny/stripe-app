@@ -1,5 +1,6 @@
 /* global swal Stripe  */
 const $ = selector => document.querySelector(selector)
+const baseAPI = 'https://siriusb36-stripe.site/api'
 let ALL_CUSTOMERS
 let STRIPE
 
@@ -30,13 +31,13 @@ const displayCustomers = async () => {
     return
   }
 
-  const keyError = await STRIPE.checkKey()
+  // const keyError = await STRIPE.checkKey()
 
-  if (keyError) {
-    swal('Oops', keyError, 'error')
+  // if (keyError) {
+  //   swal('Oops', keyError, 'error')
 
-    return
-  }
+  //   return
+  // }
 
   startLoader(els.$applyFilter)
   els.$chargeBtn.disabled = true
@@ -44,11 +45,50 @@ const displayCustomers = async () => {
 
   els.$tableData.innerHTML = `<th class="text-center" colspan="5">${getSpinnerHTML('secondary', 15)}</th>`
   setSecretKey(key)
-  const data = await STRIPE.getExtendedCustomers()
-  els.$tableData.innerHTML = ''
+  const excludedIds = $('#excludedIDS').value.trim().split(/(,|\s+|\n)/).map(item => item.trim()).filter(Boolean)
+  const refundedBox = $('#refundedBox').checked
+  const disputedBox = $('#disputedBox').checked
+  const expiredBox = $('#expiredBox').checked
+  const chargedBox = $('#chargedBox').checked
+  const validBox = $('#validBox').checked
 
-  ALL_CUSTOMERS = filterCustomers(data)
-  ALL_CUSTOMERS.forEach(renderObj)
+  const body = {
+    apiKey: key,
+    filters: {}
+  }
+
+  if (excludedIds?.length) {
+    body.filters.excludedIds = excludedIds
+  }
+
+  if (refundedBox) {
+    body.filters.refunded = true
+  }
+  if (disputedBox) {
+    body.filters.disputed = true
+  }
+  if (expiredBox) {
+    body.filters.expiredCard = true
+  }
+  if (validBox) {
+    body.filters.validCard = true
+  }
+  if (chargedBox) {
+    body.filters.chargedToday = true
+  }
+  if (body.filters == true) {
+    body.filters = undefined
+  }
+  const result = await fetch(`${baseAPI}/list-customers`, createReqOptions(body))
+  ALL_CUSTOMERS = await result.json()
+  if (ALL_CUSTOMERS.error) {
+    swal('Oops', ALL_CUSTOMERS.error, 'error')
+  }
+
+  if (ALL_CUSTOMERS?.length) {
+    els.$tableData.innerHTML = ''
+    ALL_CUSTOMERS.forEach(renderObj)
+  }
   calculateTotal()
 
   els.$chargeBtn.disabled = false
@@ -57,23 +97,23 @@ const displayCustomers = async () => {
   stopLoad(els.$applyFilter)
 }
 
-const filterCustomers = (customers) => {
-  const excludedIds = $('#excludedIDS').value.trim().split(/(,|\s+|\n)/).map(item => item.trim()).filter(Boolean)
-  const refundedBox = $('#refundedBox').checked
-  const disputedBox = $('#disputedBox').checked
-  const expiredBox = $('#expiredBox').checked
-  const chargedBox = $('#chargedBox').checked
-  const validBox = $('#validBox').checked
+// const filterCustomers = (customers) => {
+//   const excludedIds = $('#excludedIDS').value.trim().split(/(,|\s+|\n)/).map(item => item.trim()).filter(Boolean)
+//   const refundedBox = $('#refundedBox').checked
+//   const disputedBox = $('#disputedBox').checked
+//   const expiredBox = $('#expiredBox').checked
+//   const chargedBox = $('#chargedBox').checked
+//   const validBox = $('#validBox').checked
 
-  return customers.filter(cus =>
-    (!excludedIds.includes(cus.id)) &&
-      (refundedBox ? !cus.isRefunded : true) &&
-      (disputedBox ? !cus.isDisputed : true) &&
-      (expiredBox ? !cus.cardExpired : true) &&
-      (validBox ? cus.hasValidCard : true) &&
-      (chargedBox ? !cus.chargedToday : true)
-  )
-}
+//   return customers.filter(cus =>
+//     (!excludedIds.includes(cus.id)) &&
+//       (refundedBox ? !cus.isRefunded : true) &&
+//       (disputedBox ? !cus.isDisputed : true) &&
+//       (expiredBox ? !cus.cardExpired : true) &&
+//       (validBox ? cus.hasValidCard : true) &&
+//       (chargedBox ? !cus.chargedToday : true)
+//   )
+// }
 
 const downloadChargedCustomers = () => {
   const data = ALL_CUSTOMERS.map((cus, i) => ({
@@ -145,7 +185,6 @@ const chargeBtnCustomers = () => {
   }
 }
 
-
 const stopChargingCustomers = () => {
   STRIPE.inProgress = false
 }
@@ -157,7 +196,7 @@ const chargeCustomers = async () => {
     changeChargeBtnText(actionButtons.stop)
     let actualAmount = 0
     const currency = els.$currency.value
-    const concurrency = +els.$concurrency.value;
+    const concurrency = +els.$concurrency.value
     const description = els.$description.value ? els.$description.value : 'Subscription'
     STRIPE.inProgress = true
     els.$tableData.innerHTML = `<th class="text-center" colspan="5">${getSpinnerHTML('secondary', 15)}</th>`
@@ -187,7 +226,32 @@ const calculateTotal = () => {
 const getStatuesHTML = (list = []) => {
   let html = ''
   list.forEach(status => {
-    html += `<span class="me-2 mt-2 mt-lg-0 badge d-inline-block bg-${status.color}">${status.name}</span>`
+    let bgColor = ''
+
+    switch (status.toLowerCase()) {
+      case 'expired_card':
+        bgColor = 'warning'
+        break
+      case 'valid card':
+      case 'valid_card':
+        bgColor = 'success'
+        break
+      case 'no_card':
+      case 'disputed':
+        bgColor = 'danger'
+        break
+      case 'refunded':
+        bgColor = 'secondary'
+        break
+      case 'charged_today':
+        bgColor = 'info'
+        break
+      default:
+        bgColor = 'success'
+        break
+    }
+    status = status.replace('_', ' ')
+    html += `<span class="me-2 mt-2 mt-lg-0 badge d-inline-block bg-${bgColor}">${status}</span>`
   })
 
   return html
@@ -210,8 +274,8 @@ const renderObj = (obj, index) => {
 
   tr.innerHTML = `
     <th scope="row">${index + 1}</th>
-    <td >${obj.id}</td>
-    <td>${obj.email}</td>
+    <td >${obj?.customer?.id}</td>
+    <td>${obj?.customer?.email}</td>
     <td> 
       <div class="d-flex flex-wrap">
         ${statusHtml}
@@ -263,6 +327,11 @@ const getSecretKey = () => {
 
   return null
 }
+const createReqOptions = (body) => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'Accept': '*/*' },
+  ...(body && { body: JSON.stringify(body) }),
+})
 
 // init listeners
 const initListeners = () => {
