@@ -1,8 +1,10 @@
 const Stripe = require('stripe')
 const { RateLimiter } = require('limiter')
+const logger = require('./logger')
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000
 const MAX_STRIPE_REQS_PER_SECOND = 100
+const MAX_CUSTOMER_LIMIT = 5000
 const STATE = {}
 
 const addStatuses = ({ customer, charges, paymentMethods }) => {
@@ -128,7 +130,7 @@ const listCustomers = async (req, res) => {
         paymentMethodIds: paymentMethods.map(({ id: pmId }) => pmId),
         statuses
       }
-    })
+    }).slice(0, MAX_CUSTOMER_LIMIT)
 
   res.send(customers)
 }
@@ -139,7 +141,7 @@ const chargeCustomers = async (req, res) => {
     customerWithPaymentMethods,
     amount,
     currency,
-    chargePerSecond = 50,
+    chargePerSecond = 100,
     description = 'Subscription',
   } = req.body
 
@@ -190,8 +192,6 @@ const chargeCustomers = async (req, res) => {
           return_url: 'https://siriusb36-stripe.site'
         })
 
-        console.log(paymentIntent)
-
         customer.charged = paymentIntent.status === 'succeeded'
         customer.chargeError = paymentIntent?.error?.decline_code || paymentIntent?.outcome?.reason
         customer.charge = paymentIntent
@@ -200,7 +200,7 @@ const chargeCustomers = async (req, res) => {
         customer.chargeError = 'Customer has no payment method'
       }
     } catch (e) {
-      console.error('chargeCustomers', customerId, e)
+      logger.error('chargeCustomers', customerId, e)
 
       customer.charged = false
       customer.chargeError = 'INTERNAL ERROR - ' + e.message

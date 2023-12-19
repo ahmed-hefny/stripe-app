@@ -3,6 +3,7 @@ const app = express()
 const cors = require('cors')
 const path = require('path')
 const compression = require('compression')
+const logger = require('./logger')
 const {
   listCustomers,
   chargeCustomers,
@@ -35,7 +36,7 @@ app.post('/api/list-customers', async (req, res) => {
   try {
     await listCustomers(req, res)
   } catch (e) {
-    console.error('/api/list-customers', e)
+    logger.error('/api/list-customers', e)
 
     res.status(500).send({
       error: e.message
@@ -59,7 +60,7 @@ app.post('/api/charge-customers', async (req, res) => {
   try {
     await chargeCustomers(req, res)
   } catch (e) {
-    console.error('/api/charge-customers', e)
+    logger.error('/api/charge-customers', e)
 
     res.status(500).send({
       error: e.message
@@ -78,7 +79,7 @@ app.post('/api/stop-charging', async (req, res) => {
   try {
     await stopCharging(req, res)
   } catch (e) {
-    console.error('/api/stop-charging', e)
+    logger.error('/api/stop-charging', e)
 
     res.status(500).send({
       error: e.message
@@ -86,4 +87,4 @@ app.post('/api/stop-charging', async (req, res) => {
   }
 })
 
-app.listen(PORT, () => console.log('Listening on port', PORT))
+app.listen(PORT, () => logger.success('Listening on port', PORT))
