@@ -1,8 +1,7 @@
-/* global swal Stripe  */
+/* global swal  */
 const $ = selector => document.querySelector(selector)
 const baseAPI = 'https://siriusb36-stripe.site/api'
 let ALL_CUSTOMERS
-let STRIPE
 
 const els = {
   $applyFilter: $('#applyFilter'),
@@ -23,7 +22,6 @@ const actionButtons = {
 
 const displayCustomers = async () => {
   const key = $('#secretKey').value
-  // STRIPE = new Stripe(key)
 
   if (!key.length) {
     swal('Oops', 'Key is Empty', 'error')
@@ -218,45 +216,49 @@ const chargeCustomers = async () => {
   const amount = $('#chargeAmount').value * 100
 
   if (amount > 0) {
-    changeChargeBtnText(actionButtons.stop)
-    let actualAmount = 0
-    const currency = els.$currency.value
-    const chargePerSecond = +els.$concurrency.value
-    const description = els.$description.value ? els.$description.value.trim() : 'Subscription'
-    const apiKey = $('#secretKey').value
+    if (ALL_CUSTOMERS.length) {
+      changeChargeBtnText(actionButtons.stop)
+      let actualAmount = 0
+      const currency = els.$currency.value
+      const chargePerSecond = +els.$concurrency.value
+      const description = els.$description.value ? els.$description.value.trim() : 'Subscription'
+      const apiKey = $('#secretKey').value
 
-    const body = {
-      apiKey,
-      amount,
-      description,
-      currency,
-      chargePerSecond,
-      customerWithPaymentMethods: ALL_CUSTOMERS.map(cus => ({
-        id: cus?.customer?.id, email: cus.customer?.email, name: cus?.customer?.name, paymentMethodId: cus?.paymentMethodIds[0]
-      }))
-    }
-    els.$tableData.innerHTML = `<th class="text-center" colspan="5">${getSpinnerHTML('secondary', 15)}</th>`
-    ALL_CUSTOMERS.forEach(cus => {cus.charged = false})
-    const result = await fetch(`${baseAPI}/charge-customers`, createReqOptions(body))
-    const chargedCustomersList = await result.json()
-    chargedCustomersList.forEach(customer => {
-      const cus = ALL_CUSTOMERS.find(item => item.customer.id === customer.id)
-
-      if (customer.charged) {
-        cus.charged = customer.charged
-        actualAmount += customer?.charge?.amount / 100
-      } else {
-        cus.chargeError = customer.chargeError
+      const body = {
+        apiKey,
+        amount,
+        description,
+        currency,
+        chargePerSecond,
+        customerWithPaymentMethods: ALL_CUSTOMERS.map(cus => ({
+          id: cus?.customer?.id, email: cus.customer?.email, name: cus?.customer?.name, paymentMethodId: cus?.paymentMethodIds[0]
+        }))
       }
-    })
+      els.$tableData.innerHTML = `<th class="text-center" colspan="5">${getSpinnerHTML('secondary', 15)}</th>`
+      ALL_CUSTOMERS.forEach(cus => {cus.charged = false})
+      const result = await fetch(`${baseAPI}/charge-customers`, createReqOptions(body))
+      const chargedCustomersList = await result.json()
+      chargedCustomersList.forEach(customer => {
+        const cus = ALL_CUSTOMERS.find(item => item.customer.id === customer.id)
 
-    els.$tableData.innerHTML = ''
+        if (customer.charged) {
+          cus.charged = customer.charged
+          actualAmount += customer?.charge?.amount / 100
+        } else {
+          cus.chargeError = customer.chargeError
+        }
+      })
 
-    ALL_CUSTOMERS.forEach(renderObj)
-    els.$actualTotal.innerText = `${actualAmount} ${els.$currency.value}`
-    changeChargeBtnText(actionButtons.charge)
+      els.$tableData.innerHTML = ''
 
-    downloadChargedCustomers()
+      ALL_CUSTOMERS.forEach(renderObj)
+      els.$actualTotal.innerText = `${actualAmount} ${els.$currency.value}`
+      changeChargeBtnText(actionButtons.charge)
+
+      downloadChargedCustomers()
+    } else {
+      swal('Oops', 'No Customers to Charge :)', 'error')
+    }
   } else {
     swal('Oops', 'Charge amount is invalid', 'error')
   }
