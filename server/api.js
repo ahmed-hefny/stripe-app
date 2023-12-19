@@ -167,6 +167,7 @@ const chargeCustomers = async (req, res) => {
     chargePerSecond = 100,
     description = 'Subscription',
   } = req.body
+  const normalizedAmount = Math.round(Number(amount) * 100) / 100
 
   const limiter = new RateLimiter({ tokensPerInterval: MAX_STRIPE_REQS_PER_SECOND, interval: 'second' })
   const maskedKey = maskApiKey(apiKey)
@@ -174,6 +175,7 @@ const chargeCustomers = async (req, res) => {
   logger.info('[chargeCustomers] charging', {
     maskedKey,
     amount,
+    normalizedAmount,
     currency,
     chargePerSecond,
     description
@@ -212,7 +214,7 @@ const chargeCustomers = async (req, res) => {
     try {
       if (paymentMethodId) {
         const paymentIntent = await stripe.paymentIntents.create({
-          amount,
+          amount: normalizedAmount,
           currency,
           customer: customerId,
           description,
