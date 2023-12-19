@@ -17,6 +17,9 @@ npm run dev
 ```
 
 ## Features
+1. Charge Stripe Customers with filtration
+2. Charge Stripe Customers with demanded amounts, currencies, charge description and how many charge could be done per second
+3. See Stripe Customers with different filtration 
 
 Filter by:
 1. Refunded (Customer refunded a charge)
