@@ -124,7 +124,7 @@ const listCustomers = async (req, res) => {
           email,
           name
         },
-        paymentMethodIds: paymentMethods.map(({ id }) => id),
+        paymentMethodIds: paymentMethods.map(({ id: pmId }) => pmId),
         statuses
       }
     })

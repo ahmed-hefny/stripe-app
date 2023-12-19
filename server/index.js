@@ -10,7 +10,7 @@ const {
 } = require('./api')
 
 const PORT = process.env.PORT || 3000
-const PUBLIC_PATH = path.join(__dirname, 'public')
+const PUBLIC_PATH = path.join(__dirname, '..', 'public')
 
 app.use(express.json())
 app.use(cors())
