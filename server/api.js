@@ -132,7 +132,7 @@ const listCustomers = async (req, res) => {
   })
 
   const customers = (await Promise.all(customerPromises))
-    .filter(cus => cus?.id)
+    .filter(cus => cus && Object.keys(cus).length)
     .map(addStatuses)
     .filter(data => filterCustomers({ ...data, filters }))
     .map(({ customer, paymentMethods, statuses }) => {
