@@ -95,8 +95,6 @@ const listCustomers = async (req, res) => {
   logger.info('[listCustomers] fetching', { maskedKey, filters })
 
   for await (const customer of iterator) {
-    console.log(customer)
-    process.exit(0)
     if (filters?.excludedIds?.includes(customer.id)) {
       continue
     }
