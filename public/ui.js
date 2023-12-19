@@ -85,8 +85,8 @@ const displayCustomers = async () => {
     swal('Oops', ALL_CUSTOMERS.error, 'error')
   }
 
+  els.$tableData.innerHTML = ''
   if (ALL_CUSTOMERS?.length) {
-    els.$tableData.innerHTML = ''
     ALL_CUSTOMERS.forEach(renderObj)
   }
   calculateTotal()
