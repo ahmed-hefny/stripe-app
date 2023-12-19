@@ -88,6 +88,7 @@ const listCustomers = async (req, res) => {
 
   for await (const customer of iterator) {
     await limiter.removeTokens(2)
+
     promises.push([
       stripe.charges.list({
         limit: 100,
