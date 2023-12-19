@@ -193,8 +193,25 @@ const chargeBtnCustomers = () => {
   }
 }
 
-const stopChargingCustomers = () => {
-  STRIPE.inProgress = false
+const stopChargingCustomers = async () => {
+  const apiKey = $('#secretKey').value
+
+  if (!apiKey.length) {
+    swal('Oops', 'Key is Empty', 'error')
+
+    return
+  }
+
+  const result = await fetch(`${baseAPI}/stop-charging`, createReqOptions({ apiKey }))
+  const data = await result.json()
+
+  if (data.ok) {
+    swal({
+      title: 'Stopped',
+      text: 'Charging stopped!',
+      icon: 'error'
+    })
+  }
 }
 
 const chargeCustomers = async () => {
@@ -248,7 +265,7 @@ const chargeCustomers = async () => {
 const calculateTotal = () => {
   const amount = $('#chargeAmount').value
   const currency = $('#currency').value
-  els.$expectedTotal.innerText = ` ${amount ? amount * ALL_CUSTOMERS?.length : '0'} ${currency}`
+  els.$expectedTotal.innerText = ` ${amount ? amount * (ALL_CUSTOMERS?.length ? ALL_CUSTOMERS?.length : 0) : 0} ${currency}`
 }
 
 const getStatuesHTML = (list = []) => {
