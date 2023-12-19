@@ -37,7 +37,9 @@ app.post('/api/list-customers', async (req, res) => {
   } catch (e) {
     console.error('/api/list-customers', e)
 
-    res.status(500).send(e.message)
+    res.status(500).send({
+      error: e.message
+    })
   }
 })
 
@@ -59,7 +61,9 @@ app.post('/api/charge-customers', async (req, res) => {
   } catch (e) {
     console.error('/api/charge-customers', e)
 
-    res.status(500).send(e.message)
+    res.status(500).send({
+      error: e.message
+    })
   }
 })
 
@@ -76,7 +80,9 @@ app.post('/api/stop-charging', async (req, res) => {
   } catch (e) {
     console.error('/api/stop-charging', e)
 
-    res.status(500).send(e.message)
+    res.status(500).send({
+      error: e.message
+    })
   }
 })
 
