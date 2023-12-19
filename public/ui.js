@@ -79,20 +79,25 @@ const displayCustomers = async () => {
   if (body.filters == true) {
     body.filters = undefined
   }
-  const result = await fetch(`${baseAPI}/list-customers`, createReqOptions(body))
-  ALL_CUSTOMERS = await result.json()
-  if (ALL_CUSTOMERS.error) {
-    swal('Oops', ALL_CUSTOMERS.error, 'error')
-  }
+  try {
+    const result = await fetch(`${baseAPI}/list-customers`, createReqOptions(body))
+    ALL_CUSTOMERS = await result.json()
 
-  els.$tableData.innerHTML = ''
-  if (ALL_CUSTOMERS?.length) {
-    if (ALL_CUSTOMERS.length > 100) {
-      $('.table-responsive').style.overflowY = 'auto'
+    if (ALL_CUSTOMERS.error) {
+      swal('Oops', ALL_CUSTOMERS.error, 'error')
     }
-    ALL_CUSTOMERS.forEach(renderObj)
+
+    els.$tableData.innerHTML = ''
+    if (ALL_CUSTOMERS?.length) {
+      if (ALL_CUSTOMERS.length > 100) {
+        $('.table-responsive').style.overflowY = 'auto'
+      }
+      ALL_CUSTOMERS.forEach(renderObj)
+    }
+    calculateTotal()
+  } catch (error) {
+    swal('Oops', error.message, 'error')
   }
-  calculateTotal()
 
   els.$chargeBtn.disabled = false
   els.$chargeBtn.innerHTML = actionButtons.charge
