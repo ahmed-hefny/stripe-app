@@ -59,6 +59,8 @@ const addStatuses = ({ customer, charges, paymentMethods }) => {
   }
 }
 
+const maskApiKey = apiKey => apiKey?.substr(5, 15)
+
 const filterCustomers = ({ customer, statuses, filters }) => {
   const shouldFilter = (filters.excludedIds && filters.excludedIds.includes(customer.id)) ||
     (filters.refunded && statuses.includes('REFUNDED')) ||
@@ -78,6 +80,7 @@ const listCustomers = async (req, res) => {
     filters = {},
   } = req.body
 
+  const maskedKey = maskApiKey(apiKey)
   const stripe = new Stripe(apiKey, {
     telemetry: false,
   })
@@ -87,6 +90,9 @@ const listCustomers = async (req, res) => {
   })
 
   const promises = []
+  const now = Date.now()
+
+  logger.info('[listCustomers] fetching', { maskedKey, filters })
 
   for await (const customer of iterator) {
     if (filters?.excludedIds?.includes(customer.id)) {
@@ -119,11 +125,14 @@ const listCustomers = async (req, res) => {
         paymentMethods: paymentMethods.data
       }
     } catch (e) {
-      logger.error('listCustomers', e)
+      logger.error('[listCustomers]', e)
     }
+
+    return {}
   })
 
   const customers = (await Promise.all(customerPromises))
+    .filter(cus => cus?.id)
     .map(addStatuses)
     .filter(data => filterCustomers({ ...data, filters }))
     .map(({ customer, paymentMethods, statuses }) => {
@@ -140,6 +149,12 @@ const listCustomers = async (req, res) => {
       }
     }).slice(0, MAX_CUSTOMER_LIMIT)
 
+  logger.info('[listCustomers] done fetching', {
+    maskedKey,
+    customers: customers.length,
+    timeTakenInMinute: (Date.now() - now) / 1000
+  })
+
   res.send(customers)
 }
 
@@ -154,6 +169,15 @@ const chargeCustomers = async (req, res) => {
   } = req.body
 
   const limiter = new RateLimiter({ tokensPerInterval: MAX_STRIPE_REQS_PER_SECOND, interval: 'second' })
+  const maskedKey = maskApiKey(apiKey)
+
+  logger.info('[chargeCustomers] charging', {
+    maskedKey,
+    amount,
+    currency,
+    chargePerSecond,
+    description
+  })
 
   // add to state
   STATE[apiKey] = {
@@ -218,6 +242,12 @@ const chargeCustomers = async (req, res) => {
   }
 
   STATE[apiKey].inProgress = false
+
+  logger.info('[chargeCustomers] done charging', {
+    maskedKey,
+    customers: STATE[apiKey].customers.length,
+    successfulCharges: STATE[apiKey].customers.filter(item => item.charged).length,
+  })
 
   res.send(STATE[apiKey].customers)
 
