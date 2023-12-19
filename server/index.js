@@ -16,8 +16,8 @@ const PUBLIC_PATH = path.join(__dirname, '..', 'public')
 app.use(express.json())
 app.use(cors())
 app.use(compression())
+app.use(express.bodyParser({ limit: '50mb' }))
 app.use(express.static(PUBLIC_PATH))
-
 /**
  * @route POST /api/list-customers
  * 
