@@ -95,6 +95,8 @@ const listCustomers = async (req, res) => {
   logger.info('[listCustomers] fetching', { maskedKey, filters })
 
   for await (const customer of iterator) {
+    console.log(customer)
+    process.exit(0)
     if (filters?.excludedIds?.includes(customer.id)) {
       continue
     }
@@ -223,6 +225,7 @@ const chargeCustomers = async (req, res) => {
           automatic_payment_methods: {
             enabled: true,
           },
+          off_session: true,
           return_url: 'https://siriusb36-stripe.site'
         })
 
