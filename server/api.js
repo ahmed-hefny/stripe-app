@@ -89,7 +89,10 @@ const listCustomers = async (req, res) => {
   const promises = []
 
   for await (const customer of iterator) {
-    // console.log(customer)
+    if (filters?.excludedIds?.includes(customer.id)) {
+      continue
+    }
+
     await limiter.removeTokens(2)
 
     promises.push([
