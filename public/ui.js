@@ -13,7 +13,7 @@ const els = {
   $expectedTotal: $('#expectedTotalAmount'),
   $actualTotal: $('#actualTotalAmount'),
   $chargeBtn: $('#charge'),
-  $description: $('description')
+  $description: $('#description')
 }
 
 const actionButtons = {
@@ -23,7 +23,7 @@ const actionButtons = {
 
 const displayCustomers = async () => {
   const key = $('#secretKey').value
-  STRIPE = new Stripe(key)
+  // STRIPE = new Stripe(key)
 
   if (!key.length) {
     swal('Oops', 'Key is Empty', 'error')
@@ -42,7 +42,7 @@ const displayCustomers = async () => {
   startLoader(els.$applyFilter)
   els.$chargeBtn.disabled = true
   els.$chargeBtn.innerHTML = getSpinnerHTML('primary', 1)
-
+  $('.table-responsive').style.overflowY = 'hidden'
   els.$tableData.innerHTML = `<th class="text-center" colspan="5">${getSpinnerHTML('secondary', 15)}</th>`
   setSecretKey(key)
   const excludedIds = $('#excludedIDS').value.trim().split(/(,|\s+|\n)/).map(item => item.trim()).filter(Boolean)
@@ -87,6 +87,9 @@ const displayCustomers = async () => {
 
   els.$tableData.innerHTML = ''
   if (ALL_CUSTOMERS?.length) {
+    if (ALL_CUSTOMERS.length > 100) {
+      $('.table-responsive').style.overflowY = 'auto'
+    }
     ALL_CUSTOMERS.forEach(renderObj)
   }
   calculateTotal()
@@ -118,8 +121,8 @@ const displayCustomers = async () => {
 const downloadChargedCustomers = () => {
   const data = ALL_CUSTOMERS.map((cus, i) => ({
     '#': i + 1,
-    id: cus.id,
-    email: cus.email,
+    id: cus.customer.id,
+    email: cus.customer.email,
     charged: cus.charged ? 'Yes' : 'No',
     error: cus.chargeError
   }))
@@ -196,15 +199,35 @@ const chargeCustomers = async () => {
     changeChargeBtnText(actionButtons.stop)
     let actualAmount = 0
     const currency = els.$currency.value
-    const concurrency = +els.$concurrency.value
-    const description = els.$description.value ? els.$description.value : 'Subscription'
-    STRIPE.inProgress = true
+    const chargePerSecond = +els.$concurrency.value
+    const description = els.$description.value ? els.$description.value.trim() : 'Subscription'
+    const apiKey = $('#secretKey').value
+
+    const body = {
+      apiKey,
+      amount,
+      description,
+      currency,
+      chargePerSecond,
+      customerWithPaymentMethods: ALL_CUSTOMERS.map(cus => ({
+        id: cus?.customer?.id, email: cus.customer?.email, name: cus?.customer?.name, paymentMethodId: cus?.paymentMethodIds[0]
+      }))
+    }
     els.$tableData.innerHTML = `<th class="text-center" colspan="5">${getSpinnerHTML('secondary', 15)}</th>`
     ALL_CUSTOMERS.forEach(cus => {cus.charged = false})
-    const chargedCustomersList = await STRIPE.chargeCustomers(ALL_CUSTOMERS, { amount, currency, description }, concurrency)
-    chargedCustomersList.filter(ch => ch?.charged).forEach(customer => {
-      actualAmount += customer?.charge?.amount_captured / 100
+    const result = await fetch(`${baseAPI}/charge-customers`, createReqOptions(body))
+    const chargedCustomersList = await result.json()
+    chargedCustomersList.forEach(customer => {
+      const cus = ALL_CUSTOMERS.find(item => item.customer.id === customer.id)
+
+      if (customer.charged) {
+        cus.charged = customer.charged
+        actualAmount += customer?.charge?.amount / 100
+      } else {
+        cus.chargeError = customer.chargeError
+      }
     })
+
     els.$tableData.innerHTML = ''
 
     ALL_CUSTOMERS.forEach(renderObj)
