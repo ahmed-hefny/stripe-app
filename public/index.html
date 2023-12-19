@@ -12,128 +12,142 @@
 
 <body>
     <div class="container py-4">
-        <div class="form-group">
-            <label for="secretKey" class="form-label">Stripe Secret key</label>
-            <input type="text" class="form-control" id="secretKey" placeholder="Enter Key">
-            <span class="text-danger"></span>
+        <div class="">
+
+            <div class="form-group">
+                <label for="secretKey" class="form-label">Stripe Secret key</label>
+                <input type="text" class="form-control" id="secretKey" placeholder="Enter Key">
+                <span class="text-danger"></span>
+            </div>
+            <div class="my-3">
+                <label for="excludedIDS" class="form-label">Exclude Customer IDs</label>
+                <textarea class="form-control" id="excludedIDS" rows="3"></textarea>
+            </div>
+
+            <section class="d-flex flex-wrap justify-content-lg-between">
+                <div class="form-check me-2">
+                    <input class="form-check-input" type="checkbox" id="refundedBox">
+                    <label class="form-check-label" for="refundedBox">
+                        Filter Refunded
+                    </label>
+                </div>
+                <div class="form-check me-2">
+                    <input class="form-check-input" checked type="checkbox" id="disputedBox">
+                    <label class="form-check-label" for="disputedBox">
+                        Filter Disputed
+                    </label>
+                </div>
+                <div class="form-check me-2">
+                    <input class="form-check-input" checked type="checkbox" id="expiredBox">
+                    <label class="form-check-label" for="expiredBox">
+                        Filter Expired
+                    </label>
+                </div>
+                <div class="form-check me-2">
+                    <input class="form-check-input" checked type="checkbox" id="validBox">
+                    <label class="form-check-label" for="validBox">
+                        Has a Valid Card
+                    </label>
+                </div>
+                <div class="form-check me-2">
+                    <input class="form-check-input" checked type="checkbox" id="chargedBox">
+                    <label class="form-check-label" for="chargedBox">
+                        Not Charged today
+                    </label>
+                </div>
+
+            </section>
+
+
+            <button class="btn btn-primary my-3 w-100" id="applyFilter">
+                <div style="width: 1rem; height: 1rem;" class="spinner-border text-white d-none" role="loader"></div>
+                Show Customers
+            </button>
         </div>
-        <div class="my-3">
-            <label for="excludedIDS" class="form-label">Exclude Customer IDs</label>
-            <textarea class="form-control" id="excludedIDS" rows="3"></textarea>
-        </div>
 
-        <section class="d-flex flex-wrap justify-content-lg-between">
-            <div class="form-check me-2">
-                <input class="form-check-input" type="checkbox" id="refundedBox">
-                <label class="form-check-label" for="refundedBox">
-                    Filter Refunded
-                </label>
-            </div>
-            <div class="form-check me-2">
-                <input class="form-check-input" checked type="checkbox" id="disputedBox">
-                <label class="form-check-label" for="disputedBox">
-                    Filter Disputed
-                </label>
-            </div>
-            <div class="form-check me-2">
-                <input class="form-check-input" checked type="checkbox" id="expiredBox">
-                <label class="form-check-label" for="expiredBox">
-                    Filter Expired
-                </label>
-            </div>
-            <div class="form-check me-2">
-                <input class="form-check-input" checked type="checkbox" id="validBox">
-                <label class="form-check-label" for="validBox">
-                    Has a Valid Card
-                </label>
-            </div>
-            <div class="form-check me-2">
-                <input class="form-check-input" checked type="checkbox" id="chargedBox">
-                <label class="form-check-label" for="chargedBox">
-                    Not Charged today
-                </label>
-            </div>
-
-        </section>
-
-
-        <button class="btn btn-primary my-3 w-100" id="applyFilter">
-            <div style="width: 1rem; height: 1rem;" class="spinner-border text-white d-none" role="loader"></div>
-            Show Customers
-        </button>
+        <hr class="w-75 m-auto my-3 border-dark border-2">
 
 
         <!-- Table Data -->
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Customer ID</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Charged</th>
-                </tr>
-            </thead>
-            <tbody id="table-records">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Customer ID</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Charged</th>
+                    </tr>
+                </thead>
+                <tbody id="table-records">
 
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+
+        </div>
+
+        <hr class="w-75 m-auto my-3 border-dark border-2">
+
 
         <!-- Table Ends here -->
-        <div class="row">
-            <div class="col-lg-3 col-6">
-                <div class="form-group">
-                    <label for="chargeAmount" class="form-label">Amount</label>
-                    <input type="number" class="form-control" id="chargeAmount" placeholder="Charge Amount">
+        <!-- <div class="border rounded border-2 py-3"> -->
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <div class="form-group">
+                        <label for="chargeAmount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="chargeAmount" placeholder="Charge Amount">
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="form-group">
+                        <label for="currency">Currency</label>
+                        <select class="form-control mt-2" id="currency">
+                            <option value="USD">USD</option>
+                            <option value="EUR">Euro</option>
+    
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="form-group">
+                        <label for="concurrency">Charge speed (Charges/sec) </label>
+                        <select class="form-control mt-2" id="concurrency">
+                            <option value="1">1</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="30">30</option>
+                            <option value="50" selected>50</option>
+    
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6 mt-4 text-secondary fw-bold d-flex flex-column">
+                    <span>
+                        Expected Total: <span id="expectedTotalAmount" class="ms-1 text-secondary"> </span>
+                    </span>
+                    <span>
+                        Actual Total: <span id="actualTotalAmount" class="ms-1 text-success"> </span>
+    
+                    </span>
+    
+                </div>
+    
+            </div>
+            <div class="row align-items-end py-3">
+                <div class="col-lg-10 col-12 ">
+                    <div class="form-group">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="number" class="form-control" id="description" placeholder="Description">
+                    </div>
+                </div>
+                <div class="col-lg-2 col-12 charge-btn">
+                    <button class="btn btn-outline-success w-100" id="charge">Charge</button>
                 </div>
             </div>
-            <div class="col-lg-3 col-6">
-                <div class="form-group">
-                    <label for="currency">Currency</label>
-                    <select class="form-control mt-2" id="currency">
-                        <option value="USD">USD</option>
-                        <option value="EUR">Euro</option>
 
-                    </select>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="form-group">
-                    <label for="concurrency">Charge speed (Charges/sec) </label>
-                    <select class="form-control mt-2" id="concurrency">
-                        <option value="1">1</option>
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="30">30</option>
-                        <option value="50" selected>50</option>
-
-                    </select>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6 mt-4 text-secondary fw-bold d-flex flex-column">
-                <span>
-                    Expected Total: <span id="expectedTotalAmount" class="ms-1 text-secondary"> </span>
-                </span>
-                <span>
-                    Actual Total: <span id="actualTotalAmount" class="ms-1 text-success"> </span>
-
-                </span>
-
-            </div>
-
-        </div>
-        <div class="row align-items-end py-3">
-            <div class="col-lg-10 col-12 ">
-                <div class="form-group">
-                    <label for="description" class="form-label">Description</label>
-                    <input type="number" class="form-control" id="description" placeholder="Description">
-                </div>
-            </div>
-            <div class="col-lg-2 col-12 charge-btn">
-                <button class="btn btn-outline-success w-100" id="charge">Charge</button>
-            </div>
-        </div>
+        <!-- </div> -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
@@ -153,4 +167,5 @@
 <footer class="d-flex justify-content-center text-secondary fw-bold ">
     <small>siriusb36-stripe-charges v1.2</small>
 </footer>
+
 </html>
