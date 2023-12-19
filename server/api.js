@@ -89,6 +89,7 @@ const listCustomers = async (req, res) => {
   const promises = []
 
   for await (const customer of iterator) {
+    // console.log(customer)
     await limiter.removeTokens(2)
 
     promises.push([
@@ -102,16 +103,20 @@ const listCustomers = async (req, res) => {
   }
 
   const customerPromises = promises.map(async ([chargePromise, paymentMethodPromise, customerPromise]) => {
-    const [charges, paymentMethods, customer] = await Promise.all([
-      chargePromise,
-      paymentMethodPromise,
-      customerPromise
-    ])
+    try {
+      const [charges, paymentMethods, customer] = await Promise.all([
+        chargePromise,
+        paymentMethodPromise,
+        customerPromise
+      ])
 
-    return {
-      customer,
-      charges: charges.data,
-      paymentMethods: paymentMethods.data
+      return {
+        customer,
+        charges: charges.data,
+        paymentMethods: paymentMethods.data
+      }
+    } catch (e) {
+      logger.error('listCustomers', e)
     }
   })
 

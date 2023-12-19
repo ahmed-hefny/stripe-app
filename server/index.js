@@ -87,4 +87,14 @@ app.post('/api/stop-charging', async (req, res) => {
   }
 })
 
+app.get('/api/timeout', (req, res) => {
+  const { timeout = 1000 } = req.query
+  
+  setTimeout(() => {
+    res.send({
+      ok: true
+    })
+  }, Number(timeout))
+}
+)
 app.listen(PORT, () => logger.success('Listening on port', PORT))
